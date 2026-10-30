@@ -1,0 +1,56 @@
+---
+layout: runbook
+title: '#4471 · three problems, not one'
+owner: Noah Kronemeyer
+status: open
+reviewed: 2026-10-29
+signature: Noah Kronemeyer (@NoahDavidATL)
+---
+
+<script>
+  import ProblemTable from '#lib/kb/ProblemTable.svelte';
+  import Callout from '#lib/kb/Callout.svelte';
+  import RenderStamp from '#lib/kb/RenderStamp.svelte';
+</script>
+
+[#4471](/kb/incidents/4471) is marked known: one bug, the parser, one fix queued. Read the
+report bodies and the tenant directory and the ticket holds three problems. Fixing the parser
+closes only the first one.
+
+<Callout kind="warn">
+Not one issue. Each problem below has its own ticket, and the counts come from the reports, not
+from the subject lines they were merged on.
+</Callout>
+
+## The problems
+
+<ProblemTable
+  ticket={4471}
+  repo="https://github.com/NoahDavidATL/support-kb-4471"
+  issues={{ parser: 1, hint: 2, 'one-day-move': 3 }}
+/>
+
+## How each report was placed
+
+1. **One report, one count.** The export pages overlap, so some reports come twice. Each id
+   counts once.
+2. **One-day moves first.** A report the desk already read as a one-day move
+   (`desk-notes.json`) is not a month flip: a month-first parser cannot turn 12 May into 11 May.
+   These dates land one day early, which points at a time zone shift. They get their own problem.
+3. **Then by tenant, not by intake tag.** Intake guesses from the reporter's browser. The cause
+   depends on the tenant's locale and booking form (`causes.ts`):
+   - a report through the form of a `booking-v3` tenant is `hint`: the form tells people to
+     type month first, then reads the date day first;
+   - every other report from a day-first tenant is `parser`.
+
+## What changes for the desk
+
+- **parser**: the queued fix stands, for this problem only.
+- **hint**: the parser fix does not reach it. `booking-v3` needs its date hint (or its read
+  order) to match the tenant's locale.
+- **one-day move**: a separate bug in how dates cross time zones. Nobody owns it yet.
+- Merging on subject ([decision 0001](/kb/decisions/0001-dedupe-by-subject)) put all three
+  in one ticket. A big ticket can be several bugs that look alike. Read the bodies before you
+  mark it known.
+
+<RenderStamp {signature} />
