@@ -3,53 +3,52 @@
   import notes from '#lib/data/desk-notes.json';
   import type { Report } from '#lib/kb/causes';
   import { tenantOf } from '#lib/kb/locales';
-  import { groupByProblem, type Problem } from '#lib/kb/problems';
+  import { problemRows, type Problem } from '#lib/kb/problems';
+
+  type Ticket = { issue: number; label: string; state: string };
 
   let {
     ticket,
-    issues = {},
-    repo = '',
-  }: { ticket: number; issues?: Partial<Record<Problem, number>>; repo?: string } = $props();
+    repo,
+    tickets,
+  }: { ticket: number; repo: string; tickets: Partial<Record<Problem, Ticket>> } = $props();
 
-  const LABEL: Record<Problem, string> = {
-    parser: 'shared parser reads day-first dates month first',
-    hint: 'booking-v3 form hint says MM/DD, form reads DD/MM',
-    'one-day-move': 'date lands one day early (time zone)',
-    unplaced: 'no tenant on file',
-  };
-
-  const result = $derived(groupByProblem(reports as Report[], ticket, tenantOf, notes.oneDayMove));
+  const result = $derived(problemRows(reports as Report[], ticket, tenantOf, notes.oneDayMove));
 </script>
 
 <p class="sum">
   <strong>{result.total}</strong> unique reports merged into #{ticket} ·
-  <strong>{result.groups.length}</strong>
-  {result.groups.length === 1 ? 'problem' : 'problems'}
+  <strong>{result.rows.length}</strong>
+  {result.rows.length === 1 ? 'problem' : 'problems'}
 </p>
 
 <table>
   <thead>
-    <tr><th>problem</th><th>reports</th><th>tenants</th><th>seen</th><th>ticket</th></tr>
+    <tr><th>problem</th><th>reports</th><th>tenants</th><th>seen</th><th>ticket</th><th>state</th></tr>
   </thead>
   <tbody>
-    {#each result.groups as g (g.problem)}
+    {#each result.rows as row (row.problem)}
+      {@const t = tickets[row.problem]}
       <tr>
-        <td><code>{g.problem}</code> {LABEL[g.problem]}</td>
-        <td>{g.reports.length}</td>
-        <td>{g.tenants}</td>
-        <td>{g.firstSeen} → {g.lastSeen}</td>
-        <td>
-          {#if issues[g.problem]}
-            <a href="{repo}/issues/{issues[g.problem]}">#{issues[g.problem]}</a>
-          {:else}
-            none yet
-          {/if}
-        </td>
+        <td><code>{row.problem}</code> {t?.label ?? ''}</td>
+        <td>{row.reports}</td>
+        <td>{row.tenants}</td>
+        <td>{row.firstSeen} → {row.lastSeen}</td>
+        <td>{#if t}<a href="{repo}/issues/{t.issue}">#{t.issue}</a>{:else}none yet{/if}</td>
+        <td class="state">{t?.state ?? 'open'}</td>
       </tr>
     {/each}
   </tbody>
 </table>
 
+{#each result.rows as row (row.problem)}
+  {#if row.filedUnder}
+    <p class="note">The {row.reports} <code>{row.problem}</code> reports are also counted under <code>{row.filedUnder}</code>, where the desk files them by tenant.</p>
+  {/if}
+{/each}
+
 <style>
   .sum { font-size: 1.1rem; }
+  .state { color: var(--muted); font-size: 0.85em; }
+  .note { color: var(--muted); font-size: 0.85em; }
 </style>

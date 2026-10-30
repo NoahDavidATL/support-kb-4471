@@ -4,7 +4,7 @@ title: '#4471 · three problems, not one'
 owner: Noah Kronemeyer
 status: open
 reviewed: 2026-10-29
-signature: Noah Kronemeyer (@NoahDavidATL)
+signature: v1.eyJzdWIiOiIyNjAzIiwiYXVkIjoiY2hhbGxlbmdlOndoYXQtaXQtc2hvd3MiLCJpYXQiOjE3OTMzMzIxNTgsImV4cCI6MTc5MzQxODU1OH0.GkvYjCvU2-p3mHOpli_3QwXkof3oVHXXiAtpb-3IVtc
 ---
 
 <script>
@@ -13,13 +13,14 @@ signature: Noah Kronemeyer (@NoahDavidATL)
   import RenderStamp from '#lib/kb/RenderStamp.svelte';
 </script>
 
-[#4471](/kb/incidents/4471) is marked known: one bug, the parser, one fix queued. Read the
-report bodies and the tenant directory and the ticket holds three problems. Fixing the parser
-closes only the first one.
+[#4471](/kb/incidents/4471) was merged as one bug, the parser, and closed on 5 October when
+engineering shipped the parser fix. Read the report bodies and the tenant directory and the
+ticket held three problems. The fix closed one, the form retirement closed another, and one is
+still open.
 
 <Callout kind="warn">
-Not one issue. Each problem below has its own ticket, and the counts come from the reports, not
-from the subject lines they were merged on.
+One problem from #4471 is still open: dates that land one day early. Neither the parser fix
+nor retiring booking-v3 reaches it.
 </Callout>
 
 ## The problems
@@ -27,28 +28,33 @@ from the subject lines they were merged on.
 <ProblemTable
   ticket={4471}
   repo="https://github.com/NoahDavidATL/support-kb-4471"
-  issues={{ parser: 1, hint: 2, 'one-day-move': 3 }}
+  tickets={{
+    parser: { issue: 1, label: 'shared parser reads day-first dates month first', state: 'fixed · fix(dates): parse dd/mm for eu locales' },
+    hint: { issue: 2, label: 'booking-v3 form hint says MM/DD, form reads DD/MM', state: "won't fix · booking-v3 form retired" },
+    'one-day-move': { issue: 3, label: 'date lands one day early (time zone)', state: 'open · no owner' },
+  }}
 />
 
 ## How each report was placed
 
 1. **One report, one count.** The export pages overlap, so some reports come twice. Each id
    counts once.
-2. **One-day moves first.** A report the desk already read as a one-day move
-   (`desk-notes.json`) is not a month flip: a month-first parser cannot turn 12 May into 11 May.
-   These dates land one day early, which points at a time zone shift. They get their own problem.
-3. **Then by tenant, not by intake tag.** Intake guesses from the reporter's browser. The cause
+2. **By tenant, not by intake tag.** Intake guesses from the reporter's browser. The cause
    depends on the tenant's locale and booking form (`causes.ts`):
    - a report through the form of a `booking-v3` tenant is `hint`: the form tells people to
      type month first, then reads the date day first;
    - every other report from a day-first tenant is `parser`.
+3. **One-day moves are their own problem.** The desk already reads some reports as one-day
+   moves (`desk-notes.json`). They are not month flips: a month-first parser cannot turn
+   12 May into 11 May. The dates land one day early, which points at a time zone shift. The
+   desk still counts them under the cause their tenant files them in, so this page does too.
 
-## What changes for the desk
+## What it means for the desk
 
-- **parser**: the queued fix stands, for this problem only.
-- **hint**: the parser fix does not reach it. `booking-v3` needs its date hint (or its read
-  order) to match the tenant's locale.
-- **one-day move**: a separate bug in how dates cross time zones. Nobody owns it yet.
+- **parser**: fixed by engineering on 5 October.
+- **hint**: won't fix. The booking-v3 form is retired, so no new reports come this way.
+- **one-day move**: still open, with no owner. Watch for reports of dates one day early,
+  most of all across time zones.
 - Merging on subject ([decision 0001](/kb/decisions/0001-dedupe-by-subject)) put all three
   in one ticket. A big ticket can be several bugs that look alike. Read the bodies before you
   mark it known.
